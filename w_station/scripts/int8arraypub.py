@@ -6,7 +6,7 @@ from std_msgs.msg import Int8MultiArray,MultiArrayDimension
 
 rospy.init_node('int8array',anonymous=False)
 
-motor = rospy.Publisher('wstation/item_is_exist', Int8MultiArray, queue_size = 2)
+motor = rospy.Publisher('wstation/item_status', Int8MultiArray, queue_size = 2)
 
 while not rospy.is_shutdown():
     arg = Int8MultiArray()
