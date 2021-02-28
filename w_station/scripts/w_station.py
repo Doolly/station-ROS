@@ -18,13 +18,13 @@ class ItemStatusSubscriber():
 
     def function(self):
         # priority => high floor first
-        if (self.secondFloorCount > self.thirdFloorCount)
+        if (self.secondFloorCount > self.thirdFloorCount):
             return 2
-        elif (self.secondFloorCount < self.thirdFloorCount)
+        elif (self.secondFloorCount < self.thirdFloorCount):
             return 3
-        elif (self.secondFloorCount == 0 and self.thirdFloorCount == 0)
+        elif (self.secondFloorCount == 0 and self.thirdFloorCount == 0):
             return -1
-        else
+        else:
             # same count
             return 3
     
@@ -33,16 +33,15 @@ class ItemStatusSubscriber():
         self.thirdFloorCount = 0
 
         matrix = [[0 for msg.layout.dim[0].stride in range(msg.layout.dim[0].size)] for msg.layout.dim[1].stride in range(msg.layout.dim[1].size)]
-        floor = 1
 
-        for i in range(msg.layout.dim[0].size):
-            for j in range(msg.layout.dim[1].size):
+        for i in range(msg.layout.dim[1].size):
+            for j in range(msg.layout.dim[0].size):
                 matrix[i][j] = msg.data[(i * msg.layout.dim[1].size) + j]
 
-        for i in range(msg.layout.dim[0].size)
-            if (matrix[1][i] == 1)
+        for i in range(msg.layout.dim[1].size):
+            if (matrix[1][i] == 1):
                 self.secondFloorCount += 1
-            if (matrix[2][i] == 1)
+            if (matrix[2][i] == 1):
                 self.thirdFloorCount += 1
 
 class LiftDestinationFloorPublisher():
@@ -147,15 +146,21 @@ def wstation_main():
     lift_item_size_sub         = LiftItemSizeSubscriber()
 
     currentFloor = 0
-    destinationFloor = 0
+    destinationFloor = -1
+    pushCommand = "none"
 
     liftStatus = ""
     liftItemStatus = ""
     itemSizeStatus = ""
 
+
     print("Wstation start")
     while not rospy.is_shutdown():
         rate.sleep()
+
+        # Publish
+        lift_destination_floor_pub.send_lift_destination_floor(destinationFloor)
+        push_item_to_lift_pub.send_push_item_to_lift(pushCommand)
 
         # Subscribe from Arduino
         currentFloor = lift_current_floor_sub.function()            # 1, 2, 3
@@ -163,41 +168,47 @@ def wstation_main():
         liftItemStatus = lift_item_status_sub.function()            # "none", "exist"
 
         # ros wstation process
-        if (liftStatus == "wait")
-            print("Stage1 => Item is in the Conveyor Belt")
-            destinationFloor = item_status_sub.function()
+        if (liftStatus == "wait"):
+            print("Stage1 => start!")
+            destinationFloor = 3#item_status_sub.function()
 
-            if (destinationFloor != -1)
-                lift_destination_floor_pub.send_lift_destination_floor(destinationFloor)
+            if (destinationFloor != -1):
+                print("item is not exist")
 
-        elif (liftStatus == "arrived" and liftItemStatus == "none":
+        elif (liftStatus == "arrived" and liftItemStatus == "none"):
             print("State2 => Push Item")
+
             destinationFloor = -1
-            push_item_to_lift_pub.send_push_item_to_lift("push")
+            pushCommand = "push"
+            
             print("State2 => push item to lift")
 
-        elif (liftStatus == "arrived" and liftItemStatus == "exist")
+        elif (liftStatus == "arrived" and liftItemStatus == "exist"):
             print("State3 => Camera Check!")
 
+            pushCommand = "none"
+
             # ros 에서 우선 send_to_destination 메세지를 주기 전에 1층으로 움직이라는 명령을 주어야 함
-            if (currentFloor != 1)
-                lift_destination_floor_pub.send_lift_destination_floor(1)
+            if (currentFloor != 1):
+                destinationFloor = 1
                 continue
 
             # item size check needed!
             # itemSizeStatus = lift_item_size_sub.function()
             itemSizeStatus = "bad"
 
-            if (itemSizeStatus == "good")
+            destinationFloor = -1
+
+            if (itemSizeStatus == "good"):
                 print("State4 => Send to James")
 
-                if (currentFloor == 1)
+                if (currentFloor == 1):
                     send_to_destination_pub.send_to_destination("james")
 
-            elif (itemSizeStatus == "bad")
+            elif (itemSizeStatus == "bad"):
                 print("State5 => Send to Tray")
 
-                if (currentFloor == 1)
+                if (currentFloor == 1):
                     send_to_destination_pub.send_to_destination("tray")
 
 if __name__ == '__main__':
