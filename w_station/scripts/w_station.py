@@ -99,23 +99,14 @@ class LiftItemStatusSubscriber():
 
 class LiftItemSizeSubscriber():
     def __init__(self):
-        self.lift_item_state_sub = rospy.Subscriber("wstation/lift_item_size", String, callback=self._callback)
-        self.lift_item_state_buf = None
+        self.lift_item_size_sub = rospy.Subscriber("wstation/lift_item_size", String, callback=self._callback)
+        self.lift_item_size_buf = None
 
     def function(self):        
-        global state
-
-        if self.lift_item_state_buf == "OK":
-            self.lift_item_state_buf = None
-            state = 7
-            return state
-        elif self.lift_item_state_buf == "TooBig":
-            self.lift_item_state_buf = None
-            state = 8
-            return state
+        return self.lift_item_size_buf
     
     def _callback(self, msg):
-        self.lift_item_state_buf = msg.data
+        self.lift_item_size_buf = msg.data
 
 
 class SendToDestinationPublisher():
@@ -166,11 +157,12 @@ def wstation_main():
         currentFloor = lift_current_floor_sub.function()            # 1, 2, 3
         liftStatus = lift_status_sub.function()                     # "wait", "move", "arrived"
         liftItemStatus = lift_item_status_sub.function()            # "none", "exist"
+        itemSizeStatus = lift_item_size_sub.function()            # "good", "bad"
 
         # ros wstation process
         if (liftStatus == "wait"):
             print("Stage1 => start!")
-            destinationFloor = 3#item_status_sub.function()
+            destinationFloor = item_status_sub.function()
 
             if (destinationFloor != -1):
                 print("item is not exist")
@@ -183,7 +175,7 @@ def wstation_main():
             
             print("State2 => push item to lift")
 
-        elif (liftStatus == "arrived" and liftItemStatus == "exist"):
+        elif (liftStatus == "arrived" and liftItemStatus == "exist" and itemSizeStatus != "good" and itemSizeStatus != "bad"):
             print("State3 => Camera Check!")
 
             pushCommand = "none"
@@ -192,24 +184,27 @@ def wstation_main():
             if (currentFloor != 1):
                 destinationFloor = 1
                 continue
-
+            else:
+                destinationFloor = -1
             # item size check needed!
             # itemSizeStatus = lift_item_size_sub.function()
-            itemSizeStatus = "bad"
+            # itemSizeStatus = "bad"
 
-            destinationFloor = -1
+            
 
-            if (itemSizeStatus == "good"):
-                print("State4 => Send to James")
+        if (itemSizeStatus == "good"):
+            print("State4 => Send to James")
+        
+            if (currentFloor == 1):
+                send_to_destination_pub.send_to_destination("james")
 
-                if (currentFloor == 1):
-                    send_to_destination_pub.send_to_destination("james")
 
-            elif (itemSizeStatus == "bad"):
-                print("State5 => Send to Tray")
+        elif (itemSizeStatus == "bad"):
+            print("State5 => Send to Tray")
 
-                if (currentFloor == 1):
-                    send_to_destination_pub.send_to_destination("tray")
+            if (currentFloor == 1):
+                send_to_destination_pub.send_to_destination("tray")
+
 
 if __name__ == '__main__':
     try:
