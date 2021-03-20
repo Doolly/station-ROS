@@ -94,16 +94,6 @@ class LiftItemSizeSubscriber():
         self.lift_item_size_buf = msg.data
 
 
-class WstationStatusPublisher():
-    def __init__(self):
-        self.send_to_destination_pub = rospy.Publisher("wstation/status", String, queue_size=1)
-        self.msg = String()
-
-    def send_to_destination(self, message):
-        self.msg.data = message
-        print("go to "+message+" is published")
-        self.send_to_destination_pub.publish(self.msg)
-
 ######################################################################################################################
 ######################################################################################################################
 
@@ -115,7 +105,7 @@ class TopicList:
     liftitemstatus = False         # True, False
     liftitemsize = "none"          # good, bad, none
     jamesarrived = False           # True, False # For identify James is Exist or not
-
+    status = "none"                # 
 
 class WstationTask(TopicList):
     def __init__(self):
@@ -124,19 +114,49 @@ class WstationTask(TopicList):
     # def get_topic(self,data1,data2,data3,data4,data5,data6,data7,data8,data9):
     
     def definestatus(self):
-        if (liftitemstatus == True) and (liftitemstatus == "good"):
+        if emergency != True:
+            if (jamesarrived == False) and (liftitemstatus == True) and (liftitemstatus == "good") and (liftcurrentfloor == 1):
+                status = "waitjames"
+                return status
 
-        
+            elif (jamesarrived == True) and (liftitemstatus == True) and (liftitemstatus == "good") and (liftcurrentfloor == 1):
+                status = "tojames"
+                return status
 
-    # def is_item_push_into_lift(self):
+            elif (jamesarrived == True) and (liftitemstatus == True) and (liftitemstatus == "bad") and (liftcurrentfloor == 1):
+                status = "totray"
+                return status
 
-    # def is_item_push_into_lift(self):
-        
+            elif (liftitemstatus == True) and (liftcurrentfloor != 1):
+                status = "gofirstfloor"
+                return status
+
+            elif (liftitemstatus == False) and (liftcurrentfloor == 1) and (flooritemstatus == 2):
+                status = "gosecondfloor"
+                return status
+
+            elif (liftitemstatus == False) and (liftcurrentfloor == 1) and (flooritemstatus == 3):
+                status = "gothirdfloor"
+                return status
+                
+            elif (liftitemstatus == False) and (liftcurrentfloor = flooritemstatus):
+                status = "pushitem"
+                return status
+
+class WstationStatusPublisher(TopicList):
+    def __init__(self):
+        self.send_to_destination_pub = rospy.Publisher("wstation/status", String, queue_size=1)
+        self.msg = String()
+
+    def send_wstation_status(self):
+        self.msg.data = status
+        print("Status :  " + message)
+        self.send_to_destination_pub.publish(self.msg)
 
 ####################################################################################################################
 ####################################################################################################################
 
-        
+
 def wstation_main():
     rospy.init_node('Wstation_sub',anonymous=False)
     rate = rospy.Rate(10) # 300hz?
@@ -147,6 +167,7 @@ def wstation_main():
     lift_item_status_sub       = LiftItemStatusSubscriber()
     lift_item_size_sub         = LiftItemSizeSubscriber()
 
+    wstation_status            = WstationStatusPublisher()
 
     print("Wstation start")
     while not rospy.is_shutdown():
@@ -165,6 +186,7 @@ def wstation_main():
 
         WstationTask.definestatus()
 
+        wstation_status.send_wstation_status()
 
         # if (liftStatus == "wait"):
         #     # print(TopicList.pushitem)

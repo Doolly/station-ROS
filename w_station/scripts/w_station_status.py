@@ -34,18 +34,62 @@ class SendToDestinationPublisher():
         print("go to "+message+" is published")
         self.send_to_destination_pub.publish(self.msg)
 
+
+
 ######################################################################################################################
 ######################################################################################################################
 
 class TopicList:
 
     liftdestinationfloor = -1      # -1, 1, 2, 3
-    pushitem = False               # True, False
     sendtodestination = "none"     # james, tray, none
+    pushitem = False               # True, False
+    
 
-class WstationTask(TopicList):
+class WstationStatusSubscriber(TopicList):
     def __init__(self):
-        print("hi")
+        self.wstation_status_sub = rospy.Subscriber("wstation/status", String, callback=self._callback)
+        self.wstation_status_pub = None
+
+    # waitjames,tojames,totray,gofirstfloor,gosecondfloor,gothirdfloor,pushitem
+    def function(self):
+        if status = "waitjames":
+            liftdestinationfloor = -1
+            sendtodestination = "none"
+            pushitem = False 
+
+        if status = "tojames":
+            liftdestinationfloor = -1
+            sendtodestination = "none"
+            pushitem = False
+
+        if status = "totray":
+            liftdestinationfloor = -1
+            sendtodestination = "none"
+            pushitem = False 
+
+        if status = "gofirstfloor":
+            liftdestinationfloor = -1
+            sendtodestination = "none"
+            pushitem = False 
+
+        if status = "gosecondfloor":
+            liftdestinationfloor = -1
+            sendtodestination = "none"
+            pushitem = False 
+
+        if status = "gothirdfloor":
+            liftdestinationfloor = -1
+            sendtodestination = "none"
+            pushitem = False 
+
+        if status = "pushitem":
+            liftdestinationfloor = -1
+            sendtodestination = "none"
+            pushitem = False 
+    
+    def _callback(self, msg):
+        self.lift_current_floor_buf = msg.data
 
     # def is_item_push_into_lift(self):
 
@@ -61,10 +105,10 @@ def wstation_main():
     rospy.init_node('Wstation_pub',anonymous=False)
     rate = rospy.Rate(4) # 300hz?
 
-    lift_destination_floor_pub = LiftDestinationFloorPublisher()    # 1, 2, 3
-    send_to_destination_pub    = SendToDestinationPublisher()       # "james", "tray"
-    push_item_to_lift_pub      = PushItemToLiftPublisher()          # "push"
-
+    lift_destination_floor_pub = LiftDestinationFloorPublisher()    # -1, 1, 2, 3
+    send_to_destination_pub    = SendToDestinationPublisher()       # "james", "tray", "none"
+    push_item_to_lift_pub      = PushItemToLiftPublisher()          # "push" ,"none"
+    wstation_status_sub        = WstationStatusSubscriber()
 
 
     print("Wstation start")
@@ -72,8 +116,11 @@ def wstation_main():
 
         rate.sleep()
 
+        wstation_status_sub.function()
+
         # Publish
         lift_destination_floor_pub.send_lift_destination_floor(TopicList.liftdestinationfloor)
+        send_to_destination_pub.send_to_destination(TopicList.sendtodestination)
         push_item_to_lift_pub.send_push_item_to_lift(TopicList.pushitem)
 
 
