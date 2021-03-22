@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <node pkg="w_station" type="w_station_action.py" name="w_station_action"/>
+
+
+    <node pkg="w_station" type="w_station_status.py" name="w_station_status"/>
+
+
+</launch>
