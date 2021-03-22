@@ -128,15 +128,18 @@ class WstationTask(TopicList):
     
     def definestatus(self):
         if self.emergency != True:
-            if (self.jamesarrived == False) and (self.liftitemstatus == True) and (self.liftitemstatus == "good") and (self.liftcurrentfloor == 1):
+            if self.manual != True:
+                if 
+
+            if (self.jamesarrived == False) and (self.liftitemstatus == True) and (self.liftitemsize == "good") and (self.liftcurrentfloor == 1):
                 status = "waitjames"
                 return status
 
-            elif (self.jamesarrived == True) and (self.liftitemstatus == True) and (self.liftitemstatus == "good") and (self.liftcurrentfloor == 1):
+            elif (self.jamesarrived == True) and (self.liftitemstatus == True) and (self.liftitemsize == "good") and (self.liftcurrentfloor == 1):
                 self.status = "tojames"
                 return status
 
-            elif (self.jamesarrived == True) and (self.liftitemstatus == True) and (self.liftitemstatus == "bad") and (self.liftcurrentfloor == 1):
+            elif (self.jamesarrived == True) and (self.liftitemstatus == True) and (self.liftitemsize == "bad") and (self.liftcurrentfloor == 1):
                 self.status = "totray"
                 return status
 

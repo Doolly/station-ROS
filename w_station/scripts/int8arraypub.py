@@ -30,8 +30,8 @@ while not rospy.is_shutdown():
     arg.layout.dim.append(thing1)
 
     arg.layout.data_offset = 0
-    arg.data = [1,0,0,0,
-                0,0,1,0,
-                0,0,0,0]
+    arg.data = [1,0,0,0,0,
+                0,0,1,0,0,
+                0,0,0,0,1]
 
     motor.publish(arg)
