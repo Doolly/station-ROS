@@ -94,6 +94,16 @@ class LiftItemSizeSubscriber():
     def _callback(self, msg):
         self.lift_item_size_buf = msg.data
 
+class LifDestinationFloorSubscriber():
+    def __init__(self):
+        self.lift_destination_floor_sub = rospy.Subscriber("wstation/lift_destination_floor", Int8, callback=self._callback)
+        self.lift_destination_floor_buf = None
+
+    def function(self):        
+        return self.lift_destination_floor_buf
+    
+    def _callback(self, msg):
+        self.lift_destination_floor_buf = msg.data
 
 class EmergencySubscriber():
     def __init__(self):
@@ -240,7 +250,7 @@ class WstationTask(TopicList):
 
                 self.status = "manual"
             
-            else self.manual == False:
+            elif self.manual == False:
 
                 self.status = "emergency"
 
@@ -263,16 +273,17 @@ def wstation_main():
     rospy.init_node('Wstation_sub',anonymous=False)
     rate = rospy.Rate(10)
 
-    item_status_sub            = ItemStatusSubscriber()             # IrSensor list
-    lift_current_floor_sub     = LiftCurrentFloorSubscriber()
-    lift_status_sub            = LiftStatusSubscriber()
-    lift_item_status_sub       = LiftItemStatusSubscriber()
-    lift_item_size_sub         = LiftItemSizeSubscriber()
-    emergency_sub              = EmergencySubscriber()
-    manual_sub                 = ManualSubscriber()
+    item_status_sub             = ItemStatusSubscriber()             # IrSensor list
+    lift_current_floor_sub      = LiftCurrentFloorSubscriber()
+    lift_status_sub             = LiftStatusSubscriber()
+    lift_item_status_sub        = LiftItemStatusSubscriber()
+    lift_item_size_sub          = LiftItemSizeSubscriber()
+    lift_destination_floor_sub  = LifDestinationFloorSubscriber()
+    emergency_sub               = EmergencySubscriber()
+    manual_sub                  = ManualSubscriber()
 
-    wstation_task              = WstationTask()
-    wstation_status            = WstationStatusPublisher()
+    wstation_task               = WstationTask()
+    wstation_status             = WstationStatusPublisher()
 
     print("Wstation start")
     while not rospy.is_shutdown():
