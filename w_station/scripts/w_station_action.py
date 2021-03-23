@@ -61,41 +61,42 @@ class WstationStatusSubscriber(TopicList):
 
         if self.status == "tojames":
             liftdestinationfloor = -1
-            sendtodestination = "none"
+            sendtodestination = "james"
             pushitem = False
 
         if self.status == "totray":
             liftdestinationfloor = -1
-            sendtodestination = "none"
+            sendtodestination = "tray"
             pushitem = False 
 
         if self.status == "gofirstfloor":
-            liftdestinationfloor = -1
+            liftdestinationfloor = 1
             sendtodestination = "none"
             pushitem = False 
 
         if self.status == "gosecondfloor":
-            liftdestinationfloor = -1
+            liftdestinationfloor = 2
             sendtodestination = "none"
             pushitem = False 
 
         if self.status == "gothirdfloor":
-            liftdestinationfloor = -1
+            liftdestinationfloor = 3
             sendtodestination = "none"
             pushitem = False 
 
         if self.status == "pushitem":
             liftdestinationfloor = -1
             sendtodestination = "none"
-            pushitem = False 
+            pushitem = True
+        
+        else:
+            liftdestinationfloor = -1
+            sendtodestination = "none"
+            pushitem = False
     
     def _callback(self, msg):
         self.wstation_status_buf = msg.data
 
-    # def is_item_push_into_lift(self):
-
-    # def is_item_push_into_lift(self):
-        
 
 ####################################################################################################################
 ####################################################################################################################
@@ -104,7 +105,7 @@ class WstationStatusSubscriber(TopicList):
 def wstation_main():
 
     rospy.init_node('Wstation_pub',anonymous=False)
-    rate = rospy.Rate(4) # 300hz?
+    rate = rospy.Rate(10)
 
     lift_destination_floor_pub = LiftDestinationFloorPublisher()    # -1, 1, 2, 3
     send_to_destination_pub    = SendToDestinationPublisher()       # "james", "tray", "none"
@@ -120,9 +121,10 @@ def wstation_main():
         wstation_status_sub.function()
 
         # Publish
-        lift_destination_floor_pub.send_lift_destination_floor(TopicList.liftdestinationfloor)
-        send_to_destination_pub.send_to_destination(TopicList.sendtodestination)
-        push_item_to_lift_pub.send_push_item_to_lift(TopicList.pushitem)
+        if (TopicList.status == "emergency") or (TopicList.status == "manual"):
+            lift_destination_floor_pub.send_lift_destination_floor(TopicList.liftdestinationfloor)
+            send_to_destination_pub.send_to_destination(TopicList.sendtodestination)
+            push_item_to_lift_pub.send_push_item_to_lift(TopicList.pushitem)
 
 
 if __name__ == '__main__':

@@ -70,6 +70,7 @@ class LiftStatusSubscriber():
     def _callback(self, msg):
         self.lift_status_buf = msg.data
 
+
 class LiftItemStatusSubscriber():
     def __init__(self):
         self.lift_item_status_sub = rospy.Subscriber("wstation/lift_item_status", String, callback=self._callback)
@@ -93,6 +94,7 @@ class LiftItemSizeSubscriber():
     def _callback(self, msg):
         self.lift_item_size_buf = msg.data
 
+
 class EmergencySubscriber():
     def __init__(self):
         self.emergency_sub = rospy.Subscriber("wstation/emergency", Bool, callback=self._callback)
@@ -103,6 +105,18 @@ class EmergencySubscriber():
     
     def _callback(self, msg):
         self.emergency_buf = msg.data
+
+
+class ManualSubscriber():
+    def __init__(self):
+        self.manual_sub = rospy.Subscriber("wstation/manual", Bool, callback=self._callback)
+        self.manual_buf = False
+
+    def function(self):        
+        return self.manual_buf
+    
+    def _callback(self, msg):
+        self.manual_buf = msg.data
 
 
 ######################################################################################################################
@@ -116,48 +130,120 @@ class TopicList:
     liftitemstatus = False         # True, False
     liftitemsize = "none"          # good, bad, none
     jamesarrived = False           # True, False # For identify James is Exist or not
-    status = "none"                # 
-    emergency = False
+    
+    status = "none"                # Wstation Status
+    emergency = False              # True, False
+    manual = False                 # True, False
 
 
 class WstationTask(TopicList):
     def __init__(self):
-        print("hi")
-        
-    # def get_topic(self,data1,data2,data3,data4,data5,data6,data7,data8,data9):
+        print("Start Define Wsation Status")
     
     def definestatus(self):
+
         if self.emergency != True:
-            if self.manual != True:
-                if 
 
-            if (self.jamesarrived == False) and (self.liftitemstatus == True) and (self.liftitemsize == "good") and (self.liftcurrentfloor == 1):
-                status = "waitjames"
-                return status
+            if self.liftitemstatus == True:
 
-            elif (self.jamesarrived == True) and (self.liftitemstatus == True) and (self.liftitemsize == "good") and (self.liftcurrentfloor == 1):
-                self.status = "tojames"
-                return status
+                if self.liftitemsize == "good":
 
-            elif (self.jamesarrived == True) and (self.liftitemstatus == True) and (self.liftitemsize == "bad") and (self.liftcurrentfloor == 1):
-                self.status = "totray"
-                return status
+                    if self.liftcurrentfloor == 1:
 
-            elif (self.liftitemstatus == True) and (self.liftcurrentfloor != 1):
-                self.status = "gofirstfloor"
-                return status
+                        if self.liftstatus == "arrived":
 
-            elif (self.liftitemstatus == False) and (self.liftcurrentfloor == 1) and (self.flooritemstatus == 2):
-                self.status = "gosecondfloor"
-                return status
+                            if self.jamesarrived == True:
 
-            elif (self.liftitemstatus == False) and (self.liftcurrentfloor == 1) and (self.flooritemstatus == 3):
-                self.status = "gothirdfloor"
-                return status
+                                self.status = "tojames"
+
+                            else: # up, down
+
+                                self.status = "waitjames"
+
+                    else:
+                        self.status = "gofirstfloor"
+
+                elif self.liftitemsize == "bad":
+                    
+                    if self.liftcurrentfloor == 1:
+
+                        if self.liftstatus == "arrived":
+
+                            self.status = "totray"
+
+                        else: # up,down
+
+                            self.status = "gofirstfloor"
+
+                    else:
+                        self.status = "gofirstfloor"
+
+                else: # none
+
+                    self.status = "gofirstfloor"
+
+            elif self.liftitemstatus == False:
+
+                if self.liftcurrentfloor == 1:
+
+                    if self.flooritemstatus == -1:
+
+                        self.status = "waititem"
+                    
+                    elif self.flooritemstatus == 2:
+
+                        self.status = "gosecondfloor"
+                    
+                    elif self.flooritemstatus == 3:
+
+                        self.status = "gothirdfloor"
                 
-            elif (self.liftitemstatus == False) and (self.liftcurrentfloor == self.flooritemstatus):
-                self.status = "pushitem"
-                return status
+                elif self.liftcurrentfloor == 2:
+
+                    if (self.flooritemstatus == -1) and (self.liftdestinationfloor == -1):
+
+                        self.status = "gofirstfloor"
+                    
+                    elif (self.flooritemstatus == 2) and (self.liftitemstatus == "arrived") and (self.liftdestinationfloor == 2):
+
+                        self.status = "pushitem"
+                    
+                    elif (self.flooritemstatus == 3) and (self.liftstatus =="arrived") and (self.liftdestinationfloor == 2):
+
+                        self.status = "gofirstfloor"
+                    
+                    elif (self.flooritemstatus == 3) and (self.liftstatus =="up") and (self.liftdestinationfloor == 3):
+
+                        self.status = "gothirdfloor"
+
+                elif self.liftcurrentfloor == 3:
+
+                    if (self.flooritemstatus == -1) and (self.liftdestinationfloor == -1):
+
+                        self.status = "gofirstfloor"
+                    
+                    elif (self.flooritemstatus == 2) and (self.liftitemstatus == "arrived") and (self.liftdestinationfloor == 3):
+
+                        self.status = "gofirstfloor"
+                    
+                    elif (self.flooritemstatus == 3) and (self.liftstatus =="arrived") and (self.liftdestinationfloor == 3):
+
+                        self.status = "pushitem"
+                    
+                    elif (self.flooritemstatus == 2) and (self.liftstatus =="down") and (self.liftdestinationfloor == 3):
+
+                        self.status = "gosecondfloor"
+                        
+        elif self.emergency == True:
+
+            if self.manual == True:
+
+                self.status = "manual"
+            
+            else self.manual == False:
+
+                self.status = "emergency"
+
 
 class WstationStatusPublisher(TopicList):
     def __init__(self):
@@ -175,7 +261,7 @@ class WstationStatusPublisher(TopicList):
 
 def wstation_main():
     rospy.init_node('Wstation_sub',anonymous=False)
-    rate = rospy.Rate(10) # 300hz?
+    rate = rospy.Rate(10)
 
     item_status_sub            = ItemStatusSubscriber()             # IrSensor list
     lift_current_floor_sub     = LiftCurrentFloorSubscriber()
@@ -183,7 +269,7 @@ def wstation_main():
     lift_item_status_sub       = LiftItemStatusSubscriber()
     lift_item_size_sub         = LiftItemSizeSubscriber()
     emergency_sub              = EmergencySubscriber()
-
+    manual_sub                 = ManualSubscriber()
 
     wstation_task              = WstationTask()
     wstation_status            = WstationStatusPublisher()
@@ -193,15 +279,15 @@ def wstation_main():
 
         rate.sleep()
 
+        # Subscribe
+        TopicList.itemstatus        = item_status_sub.function()
+        TopicList.liftcurrentfloor  = lift_current_floor_sub.function()            # 1, 2, 3
+        TopicList.liftstatus        = lift_status_sub.function()                     # "wait", "move", "arrived"
+        TopicList.liftitemstatus    = lift_item_status_sub.function()            # "none", "exist"
+        TopicList.liftitemsize      = lift_item_size_sub.function()            # "good", "bad"
 
-        # Subscribe from Arduino
-        TopicList.itemstatus = item_status_sub.function()
-        TopicList.liftcurrentfloor = lift_current_floor_sub.function()            # 1, 2, 3
-        TopicList.liftstatus = lift_status_sub.function()                     # "wait", "move", "arrived"
-        TopicList.liftitemstatus = lift_item_status_sub.function()            # "none", "exist"
-        TopicList.liftitemsize = lift_item_size_sub.function()            # "good", "bad"
-        TopicList.emergency = emergency_sub.function()
-
+        TopicList.emergency         = emergency_sub.function()
+        TopicList.manual            = manual_sub.function()
 
         wstation_task.definestatus()
 
