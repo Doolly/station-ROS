@@ -4,8 +4,10 @@
 
     <node pkg="w_station" type="w_station_action.py" name="w_station_action"/>
 
-
     <node pkg="w_station" type="w_station_status.py" name="w_station_status"/>
+
+   <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+   </include>
 
 
 </launch>
