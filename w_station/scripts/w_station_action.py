@@ -52,7 +52,7 @@ class WstationStatusSubscriber(TopicList):
         self.wstation_status_sub = rospy.Subscriber("wstation/status", String, callback=self._callback)
         self.wstation_status_buf = self.status
 
-    # waitjames,tojames,totray,gofirstfloor,gosecondfloor,gothirdfloor,pushitem
+    # waitjames,tojames,totray,gofirstfloor,gosecondfloor,gothirdfloor,pushitem,waititem
     def function(self):
         if self.status == "waitjames":
             liftdestinationfloor = -1
@@ -121,7 +121,7 @@ def wstation_main():
         wstation_status_sub.function()
 
         # Publish
-        if (TopicList.status == "emergency") or (TopicList.status == "manual"):
+        if (TopicList.status != "emergency") or (TopicList.status != "manual"):
             lift_destination_floor_pub.send_lift_destination_floor(TopicList.liftdestinationfloor)
             send_to_destination_pub.send_to_destination(TopicList.sendtodestination)
             push_item_to_lift_pub.send_push_item_to_lift(TopicList.pushitem)
