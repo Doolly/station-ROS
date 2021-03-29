@@ -31,7 +31,6 @@ class SendToDestinationPublisher():
 
     def send_to_destination(self, message):
         self.msg.data = message
-        print("go to "+message+" is published")
         self.send_to_destination_pub.publish(self.msg)
 
 
@@ -54,45 +53,52 @@ class WstationStatusSubscriber(TopicList):
 
     # waitjames,tojames,totray,gofirstfloor,gosecondfloor,gothirdfloor,pushitem,waititem
     def function(self):
-        if self.status == "waitjames":
-            liftdestinationfloor = -1
-            sendtodestination = "none"
-            pushitem = False 
+        
+            
+        if self.wstation_status_buf == "waitjames":
+            TopicList.liftdestinationfloor = -1
+            TopicList.sendtodestination = "none"
+            TopicList.pushitem = False 
 
-        if self.status == "tojames":
-            liftdestinationfloor = -1
-            sendtodestination = "james"
-            pushitem = False
+        elif self.wstation_status_buf == "tojames":
+            TopicList.liftdestinationfloor = -1
+            TopicList.sendtodestination = "james"
+            TopicList.pushitem = False
 
-        if self.status == "totray":
-            liftdestinationfloor = -1
-            sendtodestination = "tray"
-            pushitem = False 
+        elif self.wstation_status_buf == "totray":
+            TopicList.liftdestinationfloor = -1
+            TopicList.sendtodestination = "tray"
+            TopicList.pushitem = False 
 
-        if self.status == "gofirstfloor":
-            liftdestinationfloor = 1
-            sendtodestination = "none"
-            pushitem = False 
+        elif self.wstation_status_buf == "gofirstfloor":
+            TopicList.liftdestinationfloor = 1
+            TopicList.sendtodestination = "none"
+            TopicList.pushitem = False 
 
-        if self.status == "gosecondfloor":
-            liftdestinationfloor = 2
-            sendtodestination = "none"
-            pushitem = False 
+        elif self.wstation_status_buf == "gosecondfloor":
+            TopicList.liftdestinationfloor = 2
+            TopicList.sendtodestination = "none"
+            TopicList.pushitem = False 
 
-        if self.status == "gothirdfloor":
-            liftdestinationfloor = 3
-            sendtodestination = "none"
-            pushitem = False 
+        elif self.wstation_status_buf == "gothirdfloor":
+            TopicList.liftdestinationfloor = 3
+            TopicList.sendtodestination = "none"
+            TopicList.pushitem = False 
 
-        if self.status == "pushitem":
-            liftdestinationfloor = -1
-            sendtodestination = "none"
-            pushitem = True
+        elif self.wstation_status_buf == "pushitem":
+            TopicList.liftdestinationfloor = -1
+            TopicList.sendtodestination = "none"
+            TopicList.pushitem = True
         
         else:
-            liftdestinationfloor = -1
-            sendtodestination = "none"
-            pushitem = False
+            TopicList.liftdestinationfloor = -1
+            TopicList.sendtodestination = "none"
+            TopicList.pushitem = False
+
+        # print(self.wstation_status_buf)
+        # print(TopicList.liftdestinationfloor)
+        # print(TopicList.sendtodestination)
+        # print(TopicList.pushitem)
     
     def _callback(self, msg):
         self.wstation_status_buf = msg.data
@@ -125,7 +131,7 @@ def wstation_main():
             lift_destination_floor_pub.send_lift_destination_floor(TopicList.liftdestinationfloor)
             send_to_destination_pub.send_to_destination(TopicList.sendtodestination)
             push_item_to_lift_pub.send_push_item_to_lift(TopicList.pushitem)
-
+        print("liftdest : "+str(TopicList.liftdestinationfloor)+" send : "+TopicList.sendtodestination+" pushitem : "+str(TopicList.pushitem))
 
 if __name__ == '__main__':
     try:

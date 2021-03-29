@@ -34,17 +34,23 @@ class ItemStatusSubscriber():
         self.secondFloorCount = 0
         self.thirdFloorCount = 0
 
-        matrix = [[0 for msg.layout.dim[0].stride in range(msg.layout.dim[0].size)] for msg.layout.dim[1].stride in range(msg.layout.dim[1].size)]
+        sizeofarray = 5
+        numofarray = 3
 
-        for i in range(msg.layout.dim[1].size):
-            for j in range(msg.layout.dim[0].size):
-                matrix[i][j] = msg.data[(i * msg.layout.dim[1].size) + j]
+        matrix = [[0 for _ in range(sizeofarray)] for _ in range(numofarray)]
 
-        for i in range(msg.layout.dim[1].size):
+        for i in range(numofarray):
+            for j in range(sizeofarray):
+                matrix[i][j] = msg.data[(i * sizeofarray) + j]
+
+        for i in range(sizeofarray):
             if (matrix[1][i] == 1):
                 self.secondFloorCount += 1
             if (matrix[2][i] == 1):
                 self.thirdFloorCount += 1
+
+        # print("secondfloor :" + str(self.secondFloorCount))
+        # print("thirdfloor :" + str(self.thirdFloorCount))
 
 
 class LiftCurrentFloorSubscriber():
@@ -243,6 +249,10 @@ class WstationTask(TopicList):
                     elif (self.flooritemstatus == 2) and (self.liftstatus =="down") and (self.liftdestinationfloor == 3):
 
                         self.status = "gosecondfloor"
+
+            else: # no data recieved
+
+                self.status = "waitstatus"
                         
         elif self.emergency == True:
 
@@ -255,14 +265,19 @@ class WstationTask(TopicList):
                 self.status = "emergency"
 
 
-class WstationStatusPublisher(TopicList):
+        # print(self.status)
+        print("self.status :" + self.status)
+        return self.status
+
+class WstationStatusPublisher():
     def __init__(self):
         self.send_to_destination_pub = rospy.Publisher("wstation/status", String, queue_size=1)
         self.msg = String()
 
-    def send_wstation_status(self):
-        self.msg.data = self.status
-        print("Status :  " + self.msg.data)
+    def send_wstation_status(self,status):
+        self.msg.data = status
+        # print("self.status :" + status)
+        print("msg.data    :" + self.msg.data)
         self.send_to_destination_pub.publish(self.msg)
 
 ####################################################################################################################
@@ -300,9 +315,9 @@ def wstation_main():
         TopicList.emergency         = emergency_sub.function()
         TopicList.manual            = manual_sub.function()
 
-        wstation_task.definestatus()
+        defined_status = wstation_task.definestatus()
 
-        wstation_status.send_wstation_status()
+        wstation_status.send_wstation_status(defined_status)
 
 
 if __name__ == '__main__':
