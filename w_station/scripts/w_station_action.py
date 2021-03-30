@@ -90,7 +90,7 @@ class WstationStatusSubscriber(TopicList):
             TopicList.sendtodestination = "none"
             TopicList.pushitem = True
         
-        else:
+        else: #
             TopicList.liftdestinationfloor = -1
             TopicList.sendtodestination = "none"
             TopicList.pushitem = False

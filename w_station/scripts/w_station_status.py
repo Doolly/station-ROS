@@ -10,10 +10,10 @@ global destination
 
 
 
-class ItemStatusSubscriber():
+class FloorItemStatusSubscriber():
     def __init__(self):
-        self.item_status_sub = rospy.Subscriber("wstation/item_status", Int8MultiArray, callback = self._callback)
-        self.item_status_buf = None
+        self.floor_item_status_sub = rospy.Subscriber("wstation/item_status", Int8MultiArray, callback = self._callback)
+        self.floor_item_status_buf = None
 
         self.secondFloorCount = 0
         self.thirdFloorCount = 0
@@ -52,7 +52,6 @@ class ItemStatusSubscriber():
         # print("secondfloor :" + str(self.secondFloorCount))
         # print("thirdfloor :" + str(self.thirdFloorCount))
 
-
 class LiftCurrentFloorSubscriber():
     def __init__(self):
         self.lift_current_floor_sub = rospy.Subscriber("wstation/lift_current_floor", Int8, callback=self._callback)
@@ -63,7 +62,6 @@ class LiftCurrentFloorSubscriber():
     
     def _callback(self, msg):
         self.lift_current_floor_buf = msg.data
-
 
 class LiftStatusSubscriber():
     def __init__(self):
@@ -76,7 +74,6 @@ class LiftStatusSubscriber():
     def _callback(self, msg):
         self.lift_status_buf = msg.data
 
-
 class LiftItemStatusSubscriber():
     def __init__(self):
         self.lift_item_status_sub = rospy.Subscriber("wstation/lift_item_status", String, callback=self._callback)
@@ -87,7 +84,6 @@ class LiftItemStatusSubscriber():
     
     def _callback(self, msg):
         self.lift_item_status_buf = msg.data
-
 
 class LiftItemSizeSubscriber():
     def __init__(self):
@@ -121,7 +117,6 @@ class EmergencySubscriber():
     
     def _callback(self, msg):
         self.emergency_buf = msg.data
-
 
 class ManualSubscriber():
     def __init__(self):
@@ -220,7 +215,7 @@ class WstationTask(TopicList):
 
                         self.status = "gofirstfloor"
                     
-                    elif (self.flooritemstatus == 2) and (self.liftitemstatus == "arrived") and (self.liftdestinationfloor == 2):
+                    elif (self.flooritemstatus == 2) and (self.liftstatus == "arrived") and (self.liftdestinationfloor == 2):
 
                         self.status = "pushitem"
                     
@@ -238,7 +233,7 @@ class WstationTask(TopicList):
 
                         self.status = "gofirstfloor"
                     
-                    elif (self.flooritemstatus == 2) and (self.liftitemstatus == "arrived") and (self.liftdestinationfloor == 3):
+                    elif (self.flooritemstatus == 2) and (self.liftstatus == "arrived") and (self.liftdestinationfloor == 3):
 
                         self.status = "gofirstfloor"
                     
@@ -264,9 +259,7 @@ class WstationTask(TopicList):
 
                 self.status = "emergency"
 
-
-        # print(self.status)
-        print("self.status :" + self.status)
+        # print("self.status :" + self.status)
         return self.status
 
 class WstationStatusPublisher():
@@ -276,8 +269,6 @@ class WstationStatusPublisher():
 
     def send_wstation_status(self,status):
         self.msg.data = status
-        # print("self.status :" + status)
-        print("msg.data    :" + self.msg.data)
         self.send_to_destination_pub.publish(self.msg)
 
 ####################################################################################################################
@@ -288,7 +279,7 @@ def wstation_main():
     rospy.init_node('Wstation_sub',anonymous=False)
     rate = rospy.Rate(10)
 
-    item_status_sub             = ItemStatusSubscriber()             # IrSensor list
+    floor_item_status_sub       = FloorItemStatusSubscriber()             # IrSensor list
     lift_current_floor_sub      = LiftCurrentFloorSubscriber()
     lift_status_sub             = LiftStatusSubscriber()
     lift_item_status_sub        = LiftItemStatusSubscriber()
@@ -306,14 +297,15 @@ def wstation_main():
         rate.sleep()
 
         # Subscribe
-        TopicList.itemstatus        = item_status_sub.function()
-        TopicList.liftcurrentfloor  = lift_current_floor_sub.function()            # 1, 2, 3
-        TopicList.liftstatus        = lift_status_sub.function()                     # "wait", "move", "arrived"
-        TopicList.liftitemstatus    = lift_item_status_sub.function()            # "none", "exist"
-        TopicList.liftitemsize      = lift_item_size_sub.function()            # "good", "bad"
+        TopicList.flooritemstatus       = floor_item_status_sub.function()          # -1, 2, 3
+        TopicList.liftcurrentfloor      = lift_current_floor_sub.function()         # 1, 2, 3
+        TopicList.liftstatus            = lift_status_sub.function()                # "wait", "move", "arrived"
+        TopicList.liftitemstatus        = lift_item_status_sub.function()           # "none", "exist"
+        TopicList.liftitemsize          = lift_item_size_sub.function()             # "good", "bad"
+        TopicList.liftdestinationfloor  = lift_destination_floor_sub.function()     # 1, 2, 3
 
-        TopicList.emergency         = emergency_sub.function()
-        TopicList.manual            = manual_sub.function()
+        TopicList.emergency             = emergency_sub.function()
+        TopicList.manual                = manual_sub.function()
 
         defined_status = wstation_task.definestatus()
 
