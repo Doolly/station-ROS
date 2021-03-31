@@ -76,7 +76,7 @@ class LiftStatusSubscriber():
 
 class LiftItemStatusSubscriber():
     def __init__(self):
-        self.lift_item_status_sub = rospy.Subscriber("wstation/lift_item_status", String, callback=self._callback)
+        self.lift_item_status_sub = rospy.Subscriber("wstation/lift_item_status", Bool, callback=self._callback)
         self.lift_item_status_buf = None
 
     def function(self):
@@ -106,6 +106,17 @@ class LifDestinationFloorSubscriber():
     
     def _callback(self, msg):
         self.lift_destination_floor_buf = msg.data
+
+class JamesArrivedSubscriber():
+    def __init__(self):
+        self.jamesarrived_sub = rospy.Subscriber("wstation/jamesarrived", Bool, callback=self._callback)
+        self.jamesarrived_buf = False
+
+    def function(self):        
+        return self.jamesarrived_buf
+    
+    def _callback(self, msg):
+        self.jamesarrived_buf = msg.data
 
 class EmergencySubscriber():
     def __init__(self):
@@ -259,7 +270,7 @@ class WstationTask(TopicList):
 
                 self.status = "emergency"
 
-        # print("self.status :" + self.status)
+        
         return self.status
 
 class WstationStatusPublisher():
@@ -268,6 +279,7 @@ class WstationStatusPublisher():
         self.msg = String()
 
     def send_wstation_status(self,status):
+        print("self.status :" + status)
         self.msg.data = status
         self.send_to_destination_pub.publish(self.msg)
 
@@ -285,6 +297,7 @@ def wstation_main():
     lift_item_status_sub        = LiftItemStatusSubscriber()
     lift_item_size_sub          = LiftItemSizeSubscriber()
     lift_destination_floor_sub  = LifDestinationFloorSubscriber()
+    james_arrived_sub            = JamesArrivedSubscriber()
     emergency_sub               = EmergencySubscriber()
     manual_sub                  = ManualSubscriber()
 
@@ -303,6 +316,7 @@ def wstation_main():
         TopicList.liftitemstatus        = lift_item_status_sub.function()           # "none", "exist"
         TopicList.liftitemsize          = lift_item_size_sub.function()             # "good", "bad"
         TopicList.liftdestinationfloor  = lift_destination_floor_sub.function()     # 1, 2, 3
+        TopicList.jamesarrived          = james_arrived_sub.function()              # true, false
 
         TopicList.emergency             = emergency_sub.function()
         TopicList.manual                = manual_sub.function()

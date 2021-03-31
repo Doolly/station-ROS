@@ -16,7 +16,7 @@ class LiftDestinationFloorPublisher():
 
 class PushItemToLiftPublisher():
     def __init__(self):
-        self.push_item_to_lift_pub = rospy.Publisher("wstation/push_item_to_lift", Bool, queue_size=1)
+        self.push_item_to_lift_pub = rospy.Publisher("wstation/push_item", Bool, queue_size=1)
         self.msg = Bool()
 
     def send_push_item_to_lift(self, push):
