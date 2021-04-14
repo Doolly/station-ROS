@@ -109,7 +109,7 @@ class LifDestinationFloorSubscriber():
 
 class OcrStatucSubscriber():
     def __init__(self):
-        self.ocr_status_sub = rospy.Subscriber("wstation/ocr_status", String, callback=self._callback)
+        self.ocr_status_sub = rospy.Subscriber("/wstation/ocr_status", String, callback=self._callback)
         self.ocr_status_buf = Bool()
 
     def function(self):
