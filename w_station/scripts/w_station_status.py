@@ -140,6 +140,17 @@ class ManualSubscriber():
     def _callback(self, msg):
         self.manual_buf = msg.data
 
+# Publisher 
+class StartItemSizeEstimationPublisher():
+    # If item is inserted this camera trigger topic will sent
+    def __init__(self):
+        self.start_item_size_estimation_pub = rospy.Publisher("wstation/start_item_size_estimation_pub", Bool, queue_size=1)
+        self.msg = Bool()
+
+    def start_item_size_estimation(self, flag):
+        self.msg.data = flag
+        self.start_item_size_estimation_pub.publish(self.msg)
+
 
 ######################################################################################################################
 ######################################################################################################################
@@ -313,7 +324,7 @@ def wstation_main():
         TopicList.flooritemstatus       = floor_item_status_sub.function()          # -1, 2, 3
         TopicList.liftcurrentfloor      = lift_current_floor_sub.function()         # 1, 2, 3
         TopicList.liftstatus            = lift_status_sub.function()                # "wait", "move", "arrived"
-        TopicList.liftitemstatus        = lift_item_status_sub.function()           # "none", "exist"
+        TopicList.liftitemstatus        = lift_item_status_sub.function()           # true, false
         TopicList.liftitemsize          = lift_item_size_sub.function()             # "good", "bad"
         TopicList.liftdestinationfloor  = lift_destination_floor_sub.function()     # 1, 2, 3
         TopicList.jamesarrived          = james_arrived_sub.function()              # true, false
@@ -321,8 +332,11 @@ def wstation_main():
         TopicList.emergency             = emergency_sub.function()
         TopicList.manual                = manual_sub.function()
 
-        defined_status = wstation_task.definestatus()
+        if (TopicList.liftcurrentfloor == 1) and (TopicList.liftstatus == "arrived") and (TopicList.liftitemstatus == true):
 
+        # Update station-ROS's status
+        defined_status = wstation_task.definestatus()
+        # Send status to w_station_action.py
         wstation_status.send_wstation_status(defined_status)
 
 
