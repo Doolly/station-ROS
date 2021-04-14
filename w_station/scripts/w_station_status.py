@@ -107,16 +107,27 @@ class LifDestinationFloorSubscriber():
     def _callback(self, msg):
         self.lift_destination_floor_buf = msg.data
 
-class JamesArrivedSubscriber():
+class OcrStatucSubscriber():
     def __init__(self):
-        self.jamesarrived_sub = rospy.Subscriber("wstation/jamesarrived", Bool, callback=self._callback)
-        self.jamesarrived_buf = False
+        self.ocr_status_sub = rospy.Subscriber("wstation/ocr_status", Bool, callback=self._callback)
+        self.ocr_status_flag = False
+
+    def function(self):
+        return self.ocr_status_flag
+
+    def _callback(self, msg):
+        self.ocr_status_flag = msg.data
+
+class JamesReadySubscriber():
+    def __init__(self):
+        self.jamesarrived_sub = rospy.Subscriber("wstation/james_ready", Bool, callback=self._callback)
+        self.james_ready_flag = False
 
     def function(self):        
-        return self.jamesarrived_buf
+        return self.james_ready_flag
     
     def _callback(self, msg):
-        self.jamesarrived_buf = msg.data
+        self.james_ready_flag = msg.data
 
 class EmergencySubscriber():
     def __init__(self):
@@ -141,15 +152,25 @@ class ManualSubscriber():
         self.manual_buf = msg.data
 
 # Publisher 
+
 class StartItemSizeEstimationPublisher():
     # If item is inserted this camera trigger topic will sent
     def __init__(self):
-        self.start_item_size_estimation_pub = rospy.Publisher("wstation/start_item_size_estimation_pub", Bool, queue_size=1)
+        self.start_item_size_estimation_pub = rospy.Publisher("wstation/start_item_size_estimation", Bool, queue_size=1)
         self.msg = Bool()
 
-    def start_item_size_estimation(self, flag):
+    def send_flag(self, flag):
         self.msg.data = flag
         self.start_item_size_estimation_pub.publish(self.msg)
+
+class StationReadyPublisher():
+    def __init__(self):
+        self.station_ready_pub = rospy.Publisher("wstation/station_ready", Bool, queue_size=1)
+        self.msg = Bool()
+
+    def send_flag(self, flag):
+        self.msg.data = flag
+        self.station_ready_pub.publish(self.msg)
 
 
 ######################################################################################################################
@@ -162,7 +183,8 @@ class TopicList:
     liftstatus = "arrived"         # arrived, up, down
     liftitemstatus = False         # True, False
     liftitemsize = "none"          # good, bad, none
-    jamesarrived = False           # True, False # For identify James is Exist or not
+    ocrstatus = False              # True, False
+    jameready = False           # True, False # For identify James is Exist or not
     
     status = "none"                # Wstation Status
     emergency = False              # True, False
@@ -179,13 +201,13 @@ class WstationTask(TopicList):
 
             if self.liftitemstatus == True:
 
-                if self.liftitemsize == "good":
+                if self.liftitemsize == "good" and self.ocrstatus == True:
 
                     if self.liftcurrentfloor == 1:
 
                         if self.liftstatus == "arrived":
 
-                            if self.jamesarrived == True:
+                            if self.jameready == True:
 
                                 self.status = "tojames"
 
@@ -196,8 +218,8 @@ class WstationTask(TopicList):
                     else:
                         self.status = "gofirstfloor"
 
-                elif self.liftitemsize == "bad":
-                    
+                elif self.liftitemsize == "bad":                
+                    # self.ocrstatus == 0 or self.ocrstatus == 1
                     if self.liftcurrentfloor == 1:
 
                         if self.liftstatus == "arrived":
@@ -211,7 +233,7 @@ class WstationTask(TopicList):
                     else:
                         self.status = "gofirstfloor"
 
-                else: # none
+                else: # (self.liftitemsize == none)
 
                     self.status = "gofirstfloor"
 
@@ -248,9 +270,9 @@ class WstationTask(TopicList):
                     elif (self.flooritemstatus == 3) and (self.liftstatus =="up") and (self.liftdestinationfloor == 3):
 
                         self.status = "gothirdfloor"
-
+                    
                 elif self.liftcurrentfloor == 3:
-
+                    
                     if (self.flooritemstatus == -1) and (self.liftdestinationfloor == -1):
 
                         self.status = "gofirstfloor"
@@ -260,7 +282,7 @@ class WstationTask(TopicList):
                         self.status = "gofirstfloor"
                     
                     elif (self.flooritemstatus == 3) and (self.liftstatus =="arrived") and (self.liftdestinationfloor == 3):
-
+                    
                         self.status = "pushitem"
                     
                     elif (self.flooritemstatus == 2) and (self.liftstatus =="down") and (self.liftdestinationfloor == 3):
@@ -308,14 +330,20 @@ def wstation_main():
     lift_item_status_sub        = LiftItemStatusSubscriber()
     lift_item_size_sub          = LiftItemSizeSubscriber()
     lift_destination_floor_sub  = LifDestinationFloorSubscriber()
-    james_arrived_sub            = JamesArrivedSubscriber()
+
+    james_ready_sub             = JamesReadySubscriber()                
+    ocr_status_sub              = OcrStatucSubscriber()
+
     emergency_sub               = EmergencySubscriber()
     manual_sub                  = ManualSubscriber()
 
     wstation_task               = WstationTask()
     wstation_status             = WstationStatusPublisher()
+    start_item_size_estimation_pub  = StartItemSizeEstimationPublisher()
+    station_ready_pub           = StationReadyPublisher()
 
     print("Wstation start")
+
     while not rospy.is_shutdown():
 
         rate.sleep()
@@ -325,14 +353,25 @@ def wstation_main():
         TopicList.liftcurrentfloor      = lift_current_floor_sub.function()         # 1, 2, 3
         TopicList.liftstatus            = lift_status_sub.function()                # "wait", "move", "arrived"
         TopicList.liftitemstatus        = lift_item_status_sub.function()           # true, false
-        TopicList.liftitemsize          = lift_item_size_sub.function()             # "good", "bad"
+        TopicList.liftitemsize          = lift_item_size_sub.function()             # "good", "bad", "none"
         TopicList.liftdestinationfloor  = lift_destination_floor_sub.function()     # 1, 2, 3
-        TopicList.jamesarrived          = james_arrived_sub.function()              # true, false
+        TopicList.jameready             = james_ready_sub.function()                # True, False
+        TopicList.ocrstatus             = ocr_status_sub.function()                 # True, False
 
-        TopicList.emergency             = emergency_sub.function()
-        TopicList.manual                = manual_sub.function()
+        TopicList.emergency             = emergency_sub.function()                  # True, False
+        TopicList.manual                = manual_sub.function()                     # True, False
 
+        # Send start item size & ocr estimation trigger!!
         if (TopicList.liftcurrentfloor == 1) and (TopicList.liftstatus == "arrived") and (TopicList.liftitemstatus == true):
+            start_item_size_estimation_pub.send_flag(True)
+        else:
+            start_item_size_estimation_pub.send_flag(False)
+
+        # Send "wstation/station_ready" topic to "James"
+        if (TopicList.liftitemsize == "good") and (TopicList.ocrstatus == True):
+            station_ready_pub.send_flag(True)
+        else:
+            station_ready_pub.send_flag(False)
 
         # Update station-ROS's status
         defined_status = wstation_task.definestatus()
