@@ -120,7 +120,7 @@ class OcrStatucSubscriber():
 
 class JamesReadySubscriber():
     def __init__(self):
-        self.jamesarrived_sub = rospy.Subscriber("wstation/james_ready", Bool, callback=self._callback)
+        self.jamesarrived_sub = rospy.Subscriber("/wstation/james_ready", Bool, callback=self._callback)
         self.james_ready_flag = Bool()
 
     def function(self):        
@@ -165,7 +165,7 @@ class StartItemSizeEstimationPublisher():
 
 class StationReadyPublisher():
     def __init__(self):
-        self.station_ready_pub = rospy.Publisher("wstation/station_ready", Bool, queue_size=1)
+        self.station_ready_pub = rospy.Publisher("/wstation/station_ready", Bool, queue_size=1)
         self.msg = Bool()
 
     def send_flag(self, flag):
