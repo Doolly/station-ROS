@@ -88,7 +88,7 @@ class LiftItemStatusSubscriber():
 class LiftItemSizeSubscriber():
     def __init__(self):
         self.lift_item_size_sub = rospy.Subscriber("wstation/lift_item_size", String, callback=self._callback)
-        self.lift_item_size_buf = None
+        self.lift_item_size_buf = String()
 
     def function(self):        
         return self.lift_item_size_buf
@@ -110,7 +110,7 @@ class LifDestinationFloorSubscriber():
 class OcrStatucSubscriber():
     def __init__(self):
         self.ocr_status_sub = rospy.Subscriber("wstation/ocr_status", String, callback=self._callback)
-        self.ocr_status_buf = None
+        self.ocr_status_buf = Bool()
 
     def function(self):
         return self.ocr_status_buf
@@ -121,7 +121,7 @@ class OcrStatucSubscriber():
 class JamesReadySubscriber():
     def __init__(self):
         self.jamesarrived_sub = rospy.Subscriber("wstation/james_ready", Bool, callback=self._callback)
-        self.james_ready_flag = False
+        self.james_ready_flag = Bool()
 
     def function(self):        
         return self.james_ready_flag
@@ -132,7 +132,7 @@ class JamesReadySubscriber():
 class EmergencySubscriber():
     def __init__(self):
         self.emergency_sub = rospy.Subscriber("wstation/emergency", Bool, callback=self._callback)
-        self.emergency_buf = False
+        self.emergency_buf = Bool()
 
     def function(self):        
         return self.emergency_buf
@@ -143,7 +143,7 @@ class EmergencySubscriber():
 class ManualSubscriber():
     def __init__(self):
         self.manual_sub = rospy.Subscriber("wstation/manual", Bool, callback=self._callback)
-        self.manual_buf = False
+        self.manual_buf = Bool()
 
     def function(self):        
         return self.manual_buf
@@ -341,6 +341,8 @@ def wstation_main():
     start_item_size_estimation_pub  = StartItemSizeEstimationPublisher()
     station_ready_pub           = StationReadyPublisher()
 
+    initialize_pub = rospy.Publisher("/initialize", Bool, queue_size=1)
+
     print("Wstation start")
 
     while not rospy.is_shutdown():
@@ -354,6 +356,11 @@ def wstation_main():
         TopicList.liftitemstatus        = lift_item_status_sub.function()           # true, false
         TopicList.liftdestinationfloor  = lift_destination_floor_sub.function()     # 1, 2, 3
         TopicList.jameready             = james_ready_sub.function()                # True, False
+
+        if (TopicList.jameready == True):
+            initialize_pub.publish(True)
+        else:
+            initialize_pub.publish(False)        
         
         TopicList.emergency             = emergency_sub.function()                  # True, False
         TopicList.manual                = manual_sub.function()                     # True, False
